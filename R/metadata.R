@@ -1,6 +1,6 @@
 get_metadata = function(source = raw) {
     entries = get_metadata_content(source)
-    if (entries$n_entries < 1) {
+    if (entries$n_entries < 0) {
         return(lst(entries))
     }
     extensions = get_metadata_extensions(source)
@@ -10,12 +10,16 @@ get_metadata = function(source = raw) {
 get_metadata_content = function(source = raw) {
     n_entries = get_int(source)
     message(glue('{n_entries} metadata entries starting at {pos(source)-4}'))
-    if (n_entries < 1) {
+    if (n_entries < 0) {
         return(lst(n_entries))
     }
-    entries = map(1:n_entries, 
-                  ~ get_metadata_entry(source))
     if (n_entries > 0) {
+        entries = map(1:n_entries, 
+                      ~ get_metadata_entry(source))
+    } else {
+        entries = NULL
+    }
+    if (n_entries >= 0) {
         version = get_int(source)
     } else {
         version = NULL
