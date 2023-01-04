@@ -5,7 +5,8 @@ get_segments = function(source) {
         return(list())
     }
     segments = map(1:n_segments, 
-                   ~ get_segment(source))
+                   ~ get_segment(source), 
+                   .progress = 'segments')
     return(lst(n_segments, segments))
 }
 
@@ -15,13 +16,3 @@ get_segment = function(source) {
     return(lst(metadata, locations))
 }
 
-get_locations = function(source) {
-    n_locations = get_int(source)
-    message(glue('{n_locations} locations starting at {pos(source)-4}'))
-    if (n_locations < 1) {
-        return(lst(n_locations))
-    }
-    locations = map(1:n_locations, 
-                    ~ get_location(source))
-    return(lst(n_locations, locations))
-}

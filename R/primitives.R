@@ -1,3 +1,7 @@
+## File specification version and position as we read through the file 
+## are handled OOP-style, with object attributes modified via 
+## side effects.  
+
 ## File spec version ----
 version = attr_getter('version')
 set_ver = function(object, version) {
@@ -31,7 +35,7 @@ get_bytes = function(source,
                      len,
                      offset = pos(source), 
                      move_pos = TRUE) {
-    map_raw(1:len, ~get_byte(source))
+    map_vec(1:len, ~get_byte(source))
 }
 
 get_int = function(source, 

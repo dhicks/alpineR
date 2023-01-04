@@ -1,4 +1,5 @@
-get_metadata = function(source = raw) {
+## TODO: handle metadata entries like locations, viz, one-level list with format name = content
+get_metadata = function(source) {
     entries = get_metadata_content(source)
     if (entries$n_entries < 0) {
         return(lst(entries))
@@ -21,7 +22,8 @@ get_metadata_content = function(source = raw) {
     }
     if (n_entries > 0) {
         entries = map(1:n_entries, 
-                      ~ get_metadata_entry(source))
+                      ~ get_metadata_entry(source), 
+                      .progress = 'metadata entries')
     } else {
         entries = NULL
     }
@@ -35,12 +37,13 @@ get_metadata_content = function(source = raw) {
                version))
 }
 
-get_metadata_entry = function(source = raw) {
+get_metadata_entry = function(source) {
     name = get_string(source)
     entry_type = get_int(source)
     stopifnot(!is.na(entry_type))
     ## Size of entry is based on type
-    ## NB can't use case_when() bc that evaluates all RHS expressions, including get_int()
+    ## NB can't use case_when() bc that evaluates all 
+    ## RHS expressions, and get_int() changes pos(source)
     if (identical(entry_type, -1L)) {
         ## Boolean
         size = 1
@@ -80,14 +83,15 @@ get_metadata_entry = function(source = raw) {
                 content = content))
 }
 
-get_metadata_extensions = function(source = raw) {
+get_metadata_extensions = function(source) {
     n_extensions = get_int(source)
     message(glue('{n_extensions} metadata extensions starting at {pos(source)-4}'))
     if (n_extensions < 1) {
         return(lst(n_extensions))
     }
     extensions = map(1:n_extensions, 
-                     ~ get_metadata_extension(source))
+                     ~ get_metadata_extension(source), 
+                     progress = 'metadata extensions')
     return(lst(n_extensions, extensions))
 }
 

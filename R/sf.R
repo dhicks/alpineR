@@ -1,6 +1,5 @@
-library(sf)
-
 segments_to_sf = function(parsed) {
+    ## TODO: include metadata as attributes
     dataf = pluck(parsed, 'segments', 'segments') |> 
         map(pluck, 'locations', 'locations') |> 
         modify_depth(1, map, as_tibble) |> 
@@ -12,8 +11,9 @@ segments_to_sf = function(parsed) {
                        crs = 4326)
     
     ## TODO: trk presumably gives elevation in WGS84, used by GPS
-    ## but map displays typically convert this to EGM96, which is more accurate
-    ## this bit doesn't change the elevations
+    ## but map displays typically convert this to EGM96, which is 
+    ## more accurate. 
+    ## this approach doesn't change the elevations
     # head(datasf$elevation)
     # datasf = datasf |> 
     #     st_transform(crs = 5773)
@@ -29,4 +29,7 @@ segments_to_sf = function(parsed) {
 #            ele = elevation, time) |> 
 #     st_write('test.gpx', layer = 'track_points')
 
+## TODO: Export as Rds
+
+## TODO: helper functions for cleaning and casting to LINESTRING
 

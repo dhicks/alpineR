@@ -13,6 +13,7 @@ list.files(path = 'R', pattern = '.R') %>%
 
 ## Read in raw file ----
 ## APQ 2.2.7c
+foo = parse_trk(here('test_data', 'track_20210205_112437.trk'))
 # dataf = parse_trk(here('test_data', 'track_20210205_112437.trk')) |> 
 #     segments_to_sf()
 

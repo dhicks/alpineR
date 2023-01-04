@@ -1,8 +1,9 @@
 parse_trk = function(path) {
     raw = read_file_raw(path) |> 
         reset_pos()
-    start = get_bytes(raw, 4)
     
+    ## Check the first 4 bytes for the file version
+    start = get_bytes(raw, 4)
     if (identical(start, 
                   as.raw(c(0x00, 0x00, 0x00, 0x03)))) {
         ## APQ 2.0 through 2.2.7c
@@ -48,31 +49,14 @@ parse_trk = function(path) {
     }
     
     if (identical(version(raw), 4L)) {
-        ## File header ----
-        ## header size (bytes before {Waypoints})
+        ## File header size (bytes before {Waypoints})
         header_size = get_int(raw)
         header_size
         
-        ## Metadata ----
-        ## Technical metadata
-        # debugonce(get_metadata_entry)
         technical_metadata = get_metadata(raw)
-        
-        ## User metadata
-        # debugonce(get_string)
-        # set_pos(raw, 77)
         user_metadata = get_metadata4(raw)
-        user_metadata
-        
-        
-        ## Waypoints ----
-        # debugonce(get_location)
-        # set_pos(raw, 247-4)
+
         waypoints = get_waypoints(raw)
-        
-        ## Track segments ----
-        # debug(get_location_value)
-        # set_pos(raw, 261)
         segments = get_segments(raw)
         
         lst(technical_metadata, 
@@ -80,4 +64,4 @@ parse_trk = function(path) {
             waypoints, 
             segments)
     }
-    }
+}
