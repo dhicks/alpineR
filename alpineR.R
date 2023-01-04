@@ -12,7 +12,23 @@ list.files(path = 'R', pattern = '.R') %>%
     walk(source)
 
 ## Read in raw file ----
-file = here('test_data', 'track_20210205_112437.trk')
+## APQ 2.2.7c
+# dataf = parse_trk(here('test_data', 'track_20210205_112437.trk')) |> 
+#     segments_to_sf()
+
+## APQ 2.2.8c
+# file = here('test_data', 'track_20210205_112437.trk')
+# parsed = parse_trk(file)
+# dataf = segments_to_sf(parsed)
+
+## APQ 2.0.0
+# file = here('test_data', 'track_20160505_115608.trk')
+# parsed = parse_trk(file)
+# dataf = segments_to_sf(parsed)
+
+## TODO: APQ 1.4.22 (file version 2)
+## though I only have a handful of these from 2015
+file = here('test_data', 'track_20150725_223847.trk')
 parsed = parse_trk(file)
 dataf = segments_to_sf(parsed)
 
