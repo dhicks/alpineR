@@ -12,7 +12,7 @@ list.files(path = 'R', pattern = '.R') %>%
     walk(source)
 
 ## Read in raw file ----
-file = here('test_data', 'track_20210417_094737.trk')
+file = here('test_data', 'track_20210205_112437.trk')
 parsed = parse_trk(file)
 dataf = segments_to_sf(parsed)
 

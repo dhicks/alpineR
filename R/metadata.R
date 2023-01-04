@@ -3,6 +3,12 @@ get_metadata = function(source = raw) {
     if (entries$n_entries < 0) {
         return(lst(entries))
     }
+    if (identical(version(source), 3L)) {
+        n_extensions = get_int(source)
+        if (identical(n_extensions, -1L)) {
+            return(lst(entries))
+        }
+    }
     extensions = get_metadata_extensions(source)
     return(lst(entries, extensions))
 }
@@ -19,7 +25,7 @@ get_metadata_content = function(source = raw) {
     } else {
         entries = NULL
     }
-    if (n_entries >= 0) {
+    if (n_entries >= 0 && version(source) >= 4) {
         version = get_int(source)
     } else {
         version = NULL

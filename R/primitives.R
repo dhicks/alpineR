@@ -1,3 +1,9 @@
+## File spec version ----
+version = attr_getter('version')
+set_ver = function(object, version) {
+    data.table::setattr(object, 'version', version)
+}
+
 ## Track position in the file ----
 pos = attr_getter('position')
 set_pos = function(object, position) {

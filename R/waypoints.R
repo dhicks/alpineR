@@ -15,20 +15,41 @@ get_waypoint = function(source) {
 }
 
 get_location = function(source) {
-    size = get_int(source)
-    long = get_coord(source)
-    lat = get_coord(source)
-    
-    total_len = 4*3
-    location_values = list()
-    while (total_len < size) {
-        new_value = get_location_value(source)
-        new_value_lst = list(new_value$value) |> 
-            set_names(new_value$type)
-        location_values = c(location_values, new_value_lst)
-        total_len = total_len + new_value$len
+    if (identical(version(source), 3L)) {
+        size = get_int(source) + 4
+        long = get_coord(source)
+        lat = get_coord(source)
+        elevation = get_int(source) * 1e-3
+        time = get_time(source)
+        if (size > 4*4+8) {
+            accuracy = get_int(source)
+        } else {
+            accuracy = NA_integer_
+        }
+        if (size > 4*4+8+4) {
+            pressure = get_int(source) * 1e-3
+        } else {
+            pressure = NA_integer_
+        }
+        return(lst(long, lat, elevation, 
+                   time, accuracy, pressure))
     }
-    return(c(lst(size, long, lat), location_values))
+    else if (identical(version(source), 4L)) {
+        size = get_int(source)
+        long = get_coord(source)
+        lat = get_coord(source)
+        
+        total_len = 4*3
+        location_values = list()
+        while (total_len < size) {
+            new_value = get_location_value(source)
+            new_value_lst = list(new_value$value) |> 
+                set_names(new_value$type)
+            location_values = c(location_values, new_value_lst)
+            total_len = total_len + new_value$len
+        }
+        return(c(lst(size, long, lat), location_values))
+    }
 }
 get_location_value = function(source) {
     type_raw = get_byte(source)
