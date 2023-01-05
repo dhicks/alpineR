@@ -1,4 +1,3 @@
-## TODO: handle metadata entries like locations, viz, one-level list with format name = content
 get_metadata = function(source) {
     entries = get_metadata_content(source)
     if (entries$n_entries < 0) {
@@ -11,7 +10,7 @@ get_metadata = function(source) {
         }
     }
     extensions = get_metadata_extensions(source)
-    return(lst(entries, extensions))
+    return(c(entries, extensions))
 }
 
 get_metadata_content = function(source = raw) {
@@ -21,20 +20,24 @@ get_metadata_content = function(source = raw) {
         return(lst(n_entries))
     }
     if (n_entries > 0) {
-        entries = map(1:n_entries, 
-                      ~ get_metadata_entry(source), 
-                      .progress = 'metadata entries')
+        entries = list()
+        while (length(entries) < n_entries) {
+            new_entry = get_metadata_entry(source)
+            new_entry_lst = list(new_entry$content) |> 
+                set_names(new_entry$name)
+            entries = c(entries, new_entry_lst)
+        }
     } else {
         entries = NULL
     }
     if (n_entries >= 0 && version(source) >= 4) {
         version = get_int(source)
     } else {
-        version = NULL
+        version = NA_integer_
     }
-    return(lst(n_entries, 
+    return(c(lst(n_entries), 
                entries, 
-               version))
+               lst(version)))
 }
 
 get_metadata_entry = function(source) {

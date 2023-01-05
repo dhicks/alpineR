@@ -1,10 +1,17 @@
 segments_to_sf = function(parsed) {
-    ## TODO: include metadata as attributes
     dataf = pluck(parsed, 'segments', 'segments') |> 
         map(pluck, 'locations', 'locations') |> 
         modify_depth(1, map, as_tibble) |> 
         modify_depth(1, bind_rows) |> 
-        bind_rows(.id = 'segment')
+        bind_rows(.id = 'segment') |> 
+        mutate(elevation = set_metres(elevation), 
+               segment = as.integer(segment))
+    
+    attributes(dataf) = c(attributes(dataf), 
+                          parsed$metadata$entries)
+    attr(dataf, 'n_entries') = NULL
+    attr(dataf, 'version') = parsed$version
+    attr(dataf, 'file') = parsed$file
     
     data_sf = st_as_sf(dataf, 
                        coords = c('long', 'lat'), 
@@ -31,5 +38,82 @@ segments_to_sf = function(parsed) {
 
 ## TODO: Export as Rds
 
-## TODO: helper functions for cleaning and casting to LINESTRING
+#' Attach metres to a variable, then convert to feet
+set_metres = function(metres) {
+    units::set_units(metres, 'm')
+}
+to_ft = function(metres) {
+    units::set_units(metres, 'ft')
+}
+to_mi = function(km) {
+    units::set_units(km, 'mi')
+}
+
+#' Total elevation gain, with smoothing to reduce noise
+total_climb = function(elevations, timestamps,
+                       .period = 'second', .every = 60) {
+    smoothed = slider::slide_period_dbl(elevations, 
+                                        timestamps, 
+                                        .period = .period, 
+                                        .every = .every, 
+                                        .f = mean)
+    delta = diff(smoothed)
+    climbing = keep(delta, ~.x > 0)
+    return(sum(climbing))
+}
+
+#' Take the output of segments_to_sf() and collapse to 1 row per segment + date
+to_linestring = function(datasf, smoothing = 60) {
+    datasf |> 
+        mutate(date = lubridate::date(time)) |> 
+        group_by(segment, date) |> 
+        summarize(elevation = list(elevation), 
+                  time = list(time), 
+                  do_union = FALSE) |> 
+        st_cast('LINESTRING') |> 
+        mutate(file = attr(datasf, 'file'), 
+               creator = attr(datasf, 'creator'),
+               start_time = map_vec(time, min), 
+               end_time = map_vec(time, max),
+               duration = difftime(end_time, start_time, 
+                                   units = 'hours'), 
+               start_elevation = map_vec(elevation, first),
+               max_elevation = map_vec(elevation, max),
+               elevation_gain = map2_vec(elevation, time, 
+                                         total_climb, 
+                                         .every = smoothing),
+               length = st_length(geometry),
+               ## Shenandoah Trail Difficulty
+               std = sqrt(2 * as.numeric(to_mi(length)) * 
+                              as.numeric(to_ft(elevation_gain)))
+               ) |> 
+        relocate(file, .before = everything()) |> 
+        relocate(time, elevation, geometry, .after = everything())
+}
+
+#' Total elevation gain, with smoothing to reduce noise
+total_climb = function(elevations, timestamps,
+                       .period = 'second', .every = 60) {
+    smoothed = slider::slide_period_vec(elevations, 
+                                        timestamps, 
+                                        .period = .period, 
+                                        .every = .every, 
+                                        .f = mean)
+    delta = diff(smoothed)
+    climbing = keep(delta, ~ as.numeric(.x) > 0)
+    return(sum(climbing))
+}
+
+#' Plot the elevation over time
+## todo: smoothing
+make_profile = function(ele, time) {
+    dataf = tibble(ele, time) %>% 
+        mutate(ele = to_ft(ele))
+    ggplot(dataf, aes(time, ele)) +
+        geom_line() +
+        labs(y = 'elevation')
+}
+
+
+
 

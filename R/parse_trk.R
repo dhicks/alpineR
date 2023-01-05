@@ -12,6 +12,8 @@ parse_trk = function(path) {
                          as.raw(c(0x50, 0x50, 0x0e, 0x01)))) {
         ## APQ 2.2.8c through present
         set_ver(raw, 4L)
+    } else {
+        stop(glue("Unidentified or not supported file version {paste(start, collapse = ' ')}"))
     }
     message(glue('trk file version {version(raw)}'))
     
@@ -39,7 +41,9 @@ parse_trk = function(path) {
         waypoints = get_waypoints(raw)
         ## Segments
         segments = get_segments(raw)
-        return(lst(n_locations, n_locations, 
+        return(lst(file = basename(path), 
+                   version = version(raw),
+                   n_locations, n_locations, 
                    n_segments, n_waypoints, 
                    long, lat, time, 
                    len, len_ele, gain, duration, 
@@ -59,7 +63,9 @@ parse_trk = function(path) {
         waypoints = get_waypoints(raw)
         segments = get_segments(raw)
         
-        lst(technical_metadata, 
+        lst(file = basename(path), 
+            version = ver(raw),
+            technical_metadata, 
             user_metadata, 
             waypoints, 
             segments)
