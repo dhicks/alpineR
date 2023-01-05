@@ -86,7 +86,7 @@ to_linestring = function(datasf, smoothing = 60) {
                ## Shenandoah Trail Difficulty
                std = sqrt(2 * as.numeric(to_mi(length)) * 
                               as.numeric(to_ft(elevation_gain)))
-               ) |> 
+        ) |> 
         relocate(file, .before = everything()) |> 
         relocate(time, elevation, geometry, .after = everything())
 }
@@ -106,10 +106,24 @@ total_climb = function(elevations, timestamps,
 
 #' Plot the elevation over time
 ## todo: smoothing
-make_profile = function(ele, time) {
-    dataf = tibble(ele, time) %>% 
+make_profile = function(ele, time, 
+                        period = 'second', 
+                        every = 60) {
+    dataf_raw = data.frame(
+        i = time, 
+        ele
+    )
+    dataf_smoothed = slider::slide_period_dfr(dataf_raw, 
+                                              dataf_raw$i, 
+                                              .period = period, 
+                                              .every = every, 
+                                              ~ data.frame(
+                                                  time = max(.x$i),
+                                                  ele = mean(.x$ele)
+                                              )) |> 
         mutate(ele = to_ft(ele))
-    ggplot(dataf, aes(time, ele)) +
+    # return(dataf_smoothed)
+    ggplot(dataf_smoothed, aes(time, ele)) +
         geom_line() +
         labs(y = 'elevation')
 }
