@@ -1,0 +1,10 @@
+Package: alpineR
+Title: Convert AlpineQuest trk files
+Version: 0.0.0.2022-01-07
+Authors@R: 
+    person("Dan", "Hicks", , "hicks.daniel.j@gmail.com", role = c("aut", "cre"))
+Description: Convert AlpineQuest trk files to gpx and sf (simple feature) dataframes
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.0
+License: MIT + file LICENSE
