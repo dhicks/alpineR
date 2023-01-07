@@ -1,26 +1,56 @@
-## File specification version and position as we read through the file 
-## are handled OOP-style, with object attributes modified via 
-## side effects.  
+#' File specification and read position attributes
+#' 
+#' Track file specification and read position
+#' 
+#' File specification version and read position are handled in an OOP style as object attributes.  These functions retrieve and set the values of these attributes.  Notably, they use `data.table::setattr()` to modify attributes from within functions by reference.  
+#' 
+#' @param object Object with attributes to be retrieved or set. Usually raw file contents, eg, output from `read_file_raw()`. 
+#' @param version Value to be set to the `"version"` attribute
+#' @param position Value to be set for the `"position"` attribute
+#' @param increment Value to be added to the `"position"` attribute
+#' @return Varies by function; either attribute value or `object` (invisibly)
+#' @name file_attributes
+NULL
 
-## File spec version ----
-version = attr_getter('version')
+#' @rdname file_attributes
+version = purrr::attr_getter('version')
+#' @rdname file_attributes
 set_ver = function(object, version) {
     data.table::setattr(object, 'version', version)
 }
 
-## Track position in the file ----
-pos = attr_getter('position')
+#' @rdname file_attributes
+pos = purrr::attr_getter('position')
+#' @rdname file_attributes
 set_pos = function(object, position) {
     data.table::setattr(object, 'position', position)
 }
+#' @rdname file_attributes
 reset_pos = function(object) {
     set_pos(object, 0)
 }
+#' @rdname file_attributes
 move_pos = function(object, increment) {
     set_pos(object, pos(object) + increment)
 }
 
-## Functions to handle primitives ----
+
+#' Functions to read primitives
+#' 
+#' Read primitive datatypes from trk files
+#' 
+#' By default, data is read off from the current read location of `source` (`pos(source)`) and the read location is updated.  `get_time()` parses data to POSIXct. 
+#' 
+#' @param source Data source (eg, raw trk file contents) 
+#' @param offset Offset in bytes to start reading data
+#' @param move_pos Should the read location be updated? 
+#' @param len Number of bytes to be read
+#' @param size Length of string to be read
+#' @return Varies by function
+#' @name get_primitives
+NULL
+
+#' @rdname get_primitives
 get_byte = function(source, 
                     offset = pos(source), 
                     move_pos = TRUE) {
@@ -31,13 +61,14 @@ get_byte = function(source,
     return(value)
 }
 
-get_bytes = function(source, 
-                     len,
-                     offset = pos(source), 
-                     move_pos = TRUE) {
-    map_vec(1:len, ~get_byte(source))
-}
+# get_bytes = function(source, 
+#                      len,
+#                      offset = pos(source)) {
+#     purrr::map_vec(1:len, 
+#                    ~ get_byte(source, offset))
+# }
 
+#' @rdname get_primitives
 get_int = function(source, 
                    offset = pos(source), 
                    move_pos = TRUE) {
@@ -50,6 +81,7 @@ get_int = function(source,
     return(value)
 }
 
+#' @rdname get_primitives
 get_bool = function(source, 
                     offset = pos(source), 
                     move_pos = TRUE) {
@@ -62,6 +94,7 @@ get_bool = function(source,
     return(value)
 }
 
+#' @rdname get_primitives
 get_long = function(source, 
                     offset = pos(source), 
                     move_pos = TRUE) {
@@ -75,20 +108,25 @@ get_long = function(source,
     }
     return(value)
 }
+
+#' @rdname get_primitives
 get_coord = function(source, 
                      offset = pos(source), 
                      move_pos = TRUE) {
     get_int(source, offset, move_pos) |> 
-        multiply_by(1e-7)
+        magrittr::multiply_by(1e-7)
 }
+
+#' @rdname get_primitives
 get_time = function(source, 
                     offset = pos(source), 
                     move_pos = TRUE) {
     get_long(source, offset, move_pos) |> 
-        multiply_by(1e-3) |> 
+        magrittr::multiply_by(1e-3) |> 
         as.POSIXct(origin = '1970-01-01')
 }
 
+#' @rdname get_primitives
 get_double = function(source, 
                       offset = pos(source), 
                       move_pos = TRUE) {
@@ -101,12 +139,13 @@ get_double = function(source,
     return(value)
 }
 
+#' @rdname get_primitives
 get_raw = function(source, 
                    size,
                    offset = pos(source), 
                    move_pos = TRUE) {
     value = source[(offset+1):(offset+size)] |> 
-        readBin('raw', size = size, 
+        readBin('raw', n = size, size = 1,
                 signed = TRUE, endian = 'big')
     if (move_pos) {
         move_pos(source, size)
@@ -114,6 +153,7 @@ get_raw = function(source,
     return(value)
 }
 
+#' @rdname get_primitives
 get_string = function(source, 
                       size = NULL,
                       offset = pos(source),

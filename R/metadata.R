@@ -1,3 +1,15 @@
+#' Metadata structures
+#' 
+#' Parse metadata structures
+#' 
+#' Top-level metadata structures are divided into entries and extensions.  The exact layout differs slightly depending on the file version.  Data will be read from the current read position of `source`, ie, `pos(source)`. 
+#' 
+#' @param source Raw track file contents to be parsed
+#' @return Nested list; a single metadata entry is a flat list of {key: value} pairs. 
+#' @name metadata
+NULL
+
+#' @rdname metadata
 get_metadata = function(source) {
     entries = get_metadata_content(source)
     if (entries$n_entries < 0) {
@@ -13,9 +25,10 @@ get_metadata = function(source) {
     return(c(entries, extensions))
 }
 
-get_metadata_content = function(source = raw) {
+#' @rdname metadata
+get_metadata_content = function(source) {
     n_entries = get_int(source)
-    message(glue('{n_entries} metadata entries starting at {pos(source)-4}'))
+    message(glue::glue('{n_entries} metadata entries starting at {pos(source)-4}'))
     if (n_entries < 0) {
         return(lst(n_entries))
     }
@@ -24,7 +37,7 @@ get_metadata_content = function(source = raw) {
         while (length(entries) < n_entries) {
             new_entry = get_metadata_entry(source)
             new_entry_lst = list(new_entry$content) |> 
-                set_names(new_entry$name)
+                magrittr::set_names(new_entry$name)
             entries = c(entries, new_entry_lst)
         }
     } else {
@@ -40,6 +53,7 @@ get_metadata_content = function(source = raw) {
                lst(version)))
 }
 
+#' @rdname metadata
 get_metadata_entry = function(source) {
     name = get_string(source)
     entry_type = get_int(source)
@@ -86,19 +100,21 @@ get_metadata_entry = function(source) {
                 content = content))
 }
 
+#' @rdname metadata
 get_metadata_extensions = function(source) {
     n_extensions = get_int(source)
-    message(glue('{n_extensions} metadata extensions starting at {pos(source)-4}'))
+    message(glue::glue('{n_extensions} metadata extensions starting at {pos(source)-4}'))
     if (n_extensions < 1) {
         return(lst(n_extensions))
     }
-    extensions = map(1:n_extensions, 
+    extensions = purrr::map(1:n_extensions, 
                      ~ get_metadata_extension(source), 
                      progress = 'metadata extensions')
     return(lst(n_extensions, extensions))
 }
 
-get_metadata_extension = function(source = raw) {
+#' @rdname metadata
+get_metadata_extension = function(source) {
     name = get_string(source)
     extension = get_metadata_content()
 }

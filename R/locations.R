@@ -1,17 +1,30 @@
+#' Locations
+#' 
+#' Parse locations
+#' 
+#' trk file version 4 enabled the data content of locations to be much more flexible, treating them as a container for one or more location values. Data will be read from the current read position of `source`, ie, `pos(source)`. 
+#' 
+#' @param source Raw track file contents to be parsed
+#' @return Nested list.  An individual location is a flat list of {key: value} pairs. 
+#' @name locations
+NULL
+
+#' @rdname locations
 get_locations = function(source) {
     n_locations = get_int(source)
-    message(glue('{n_locations} locations starting at {pos(source)-4}'))
+    message(glue::glue('{n_locations} locations starting at {pos(source)-4}'))
     if (n_locations < 1) {
         return(lst(n_locations))
     }
-    locations = map(1:n_locations, 
+    locations = purrr::map(1:n_locations, 
                     ~ get_location(source), 
                     .progress = 'locations')
     return(lst(n_locations, locations))
 }
 
+#' @rdname locations
 get_location = function(source) {
-    assert_that(version(source) %in% c(3L, 4L))
+    assertthat::assert_that(version(source) %in% c(3L, 4L))
     if (identical(version(source), 3L)) {
         size = get_int(source) + 4
         long = get_coord(source)
@@ -41,7 +54,7 @@ get_location = function(source) {
         while (total_len < size) {
             new_value = get_location_value(source)
             new_value_lst = list(new_value$value) |> 
-                set_names(new_value$type)
+                magrittr::set_names(new_value$type)
             location_values = c(location_values, new_value_lst)
             total_len = total_len + new_value$len
         }
@@ -49,9 +62,10 @@ get_location = function(source) {
     }
 }
 
+#' @rdname locations
 get_location_value = function(source) {
     type_raw = get_byte(source)
-    type = case_when(
+    type = dplyr::case_when(
         type_raw == as.raw(c('0x61')) ~ 'accuracy',
         type_raw == as.raw(c('0x62')) ~ 'battery level', 
         type_raw == as.raw(c('0x65')) ~ 'elevation', 
@@ -60,8 +74,8 @@ get_location_value = function(source) {
         type_raw == as.raw(c('0x73')) ~ 'satellites', 
         type_raw == as.raw(c('0x74')) ~ 'time', 
         type_raw == as.raw(c('0x76')) ~ 'vert. accuracy')
-    assert_that(!is.na(type), 
-                msg = glue('Bad type {as.character(type_raw)} in location value at {pos(source) - 1}'))
+    asserthat::assert_that(!is.na(type), 
+                msg = glue::glue('Bad type {as.character(type_raw)} in location value at {pos(source) - 1}'))
     if (identical(type, 'accuracy')) {
         value = get_int(source) * 1e-2
         size = 4

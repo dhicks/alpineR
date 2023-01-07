@@ -1,9 +1,17 @@
+#' Parse a trk file
+#' 
+#' Parse an AlpineQuest trk file
+#' 
+#' Currently only trk versions 3 (APQ 2.0 through 2.2.7c) and 4 (2.2.8c and later) are supported.  Messages will indicate numbers of metadata entries, waypoints, locations, etc., for debugging purposes. 
+#' @param path Path to the trk file to be parsed
+#' @returns A list of the parsed file contents; exact structure depends on file version and contents.  This represents the file stream pretty directly; use `segments_to_sf()` to get a tidy representation. 
+#' @export 
 parse_trk = function(path) {
-    raw = read_file_raw(path) |> 
+    raw = readr::read_file_raw(path) |> 
         reset_pos()
     
     ## Check the first 4 bytes for the file version
-    start = get_bytes(raw, 4)
+    start = get_raw(raw, 4)
     if (identical(start, 
                   as.raw(c(0x00, 0x00, 0x00, 0x03)))) {
         ## APQ 2.0 through 2.2.7c
@@ -13,9 +21,9 @@ parse_trk = function(path) {
         ## APQ 2.2.8c through present
         set_ver(raw, 4L)
     } else {
-        stop(glue("Unidentified or not supported file version {paste(start, collapse = ' ')}"))
+        stop(glue::glue("Unidentified or not supported file version {paste(start, collapse = ' ')}"))
     }
-    message(glue('trk file version {version(raw)}'))
+    message(glue::glue('trk file version {version(raw)}'))
     
     if (identical(version(raw), 3L)) {
         header_size = get_int(raw)
@@ -28,18 +36,15 @@ parse_trk = function(path) {
         time = get_time(raw)
         ## total track length (m)
         len = get_double(raw)
-        ## double: total track length due to elevation changes (m)
+        ## total track length due to elevation changes (m)
         len_ele = get_double(raw)
-        ## double: total track elevation gain (m)
+        ## total track elevation gain (m)
         gain = get_double(raw)
-        ## long: total track time (s)
+        ## total track time (s)
         duration = get_long(raw)
         
-        ## Metadata
         metadata = get_metadata(raw)
-        ## Waypoints
         waypoints = get_waypoints(raw)
-        ## Segments
         segments = get_segments(raw)
         return(lst(file = basename(path), 
                    version = version(raw),
@@ -55,7 +60,6 @@ parse_trk = function(path) {
     if (identical(version(raw), 4L)) {
         ## File header size (bytes before {Waypoints})
         header_size = get_int(raw)
-        header_size
         
         technical_metadata = get_metadata(raw)
         user_metadata = get_metadata4(raw)
