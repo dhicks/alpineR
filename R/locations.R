@@ -74,7 +74,7 @@ get_location_value = function(source) {
         type_raw == as.raw(c('0x73')) ~ 'satellites', 
         type_raw == as.raw(c('0x74')) ~ 'time', 
         type_raw == as.raw(c('0x76')) ~ 'vert. accuracy')
-    asserthat::assert_that(!is.na(type), 
+    assertthat::assert_that(!is.na(type), 
                 msg = glue::glue('Bad type {as.character(type_raw)} in location value at {pos(source) - 1}'))
     if (identical(type, 'accuracy')) {
         value = get_int(source) * 1e-2
@@ -86,13 +86,13 @@ get_location_value = function(source) {
         value = get_int(source) * 1e-3
         size = 4
     } else if (identical(type, 'cell network info')) {
-        value = get_bytes(source, 2)
+        value = list(get_raw(source, 2))
         size = 2
     } else if (identical(type, 'pressure')) {
         value = get_int(source) * 1e-3
         size = 4
     } else if (identical(type, 'satellites')) {
-        value = get_bytes(source, 8)
+        value = list(get_raw(source, 8))
         size = 8
     } else if (identical(type, 'time')) {
         value = get_time(source)

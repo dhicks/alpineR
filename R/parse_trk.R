@@ -62,13 +62,13 @@ parse_trk = function(path) {
         header_size = get_int(raw)
         
         technical_metadata = get_metadata(raw)
-        user_metadata = get_metadata4(raw)
+        user_metadata = get_metadata(raw)
 
         waypoints = get_waypoints(raw)
         segments = get_segments(raw)
         
         lst(file = basename(path), 
-            version = ver(raw),
+            version = version(raw),
             technical_metadata, 
             user_metadata, 
             waypoints, 

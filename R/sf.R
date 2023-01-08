@@ -15,7 +15,9 @@ segments_to_sf = function(parsed) {
                segment = as.integer(segment))
     
     attributes(dataf) = c(attributes(dataf), 
-                          parsed$metadata$entries)
+                          parsed$metadata$entries, 
+                          parsed$technical_metadata, 
+                          parsed$user_metadata)
     attr(dataf, 'n_entries') = NULL
     attr(dataf, 'version') = parsed$version
     attr(dataf, 'file') = parsed$file
@@ -43,7 +45,27 @@ segments_to_sf = function(parsed) {
 #            ele = elevation, time) |> 
 #     st_write('test.gpx', layer = 'track_points')
 
-## TODO: Export as Rds
+#' Export as GPX
+#' 
+#' Write a parsed, tidied track to a GPX file
+#' 
+#' Assumes locations are ordered and column names are unchanged from the defaults. No data other than time and elevation are included. 
+#' @param data_sf Simple features dataframe to be exported
+#' @param path Location to write GPX
+#' @param group Locations will be ordered within groups defined by this variable(s)
+gps_out = function(data_sf, path, groups = c(segment)) {
+    assertthat::assert_that(inherits(data_sf, 'data.frame'), 
+                            msg = 'Export to GPS requires one row per location tidied format')
+    assertthat::assert_that(!is.list(data_sf$elevation), 
+                            msg = 'Export to GPS requires one row per location tidied format')
+    data_sf |> 
+        dplyr::group_by(track_fid = {{ groups }}) |> 
+        dplyr::mutate(track_seg_id = row_number()) |> 
+        dplyr::select(track_fid, track_seg_id, 
+               ele = elevation, time) |> 
+        sf::st_write(path, layer = 'track_points')
+}
+
 
 #' Attach metres to a variable, and convert to feet or miles
 #' @import units
@@ -79,13 +101,14 @@ to_mi = function(km) {
 #' @export
 total_climb = function(elevations, timestamps,
                        .period = 'second', .every = 60) {
-    smoothed = slider::slide_period_dbl(as.numeric(elevations), 
+    smoothed = slider::slide_period_vec(elevations, 
                                         timestamps, 
                                         .period = .period, 
                                         .every = .every, 
                                         .f = mean)
     delta = diff(smoothed)
-    climbing = purrr::keep(delta, ~.x > 0)
+    climbing = purrr::keep(delta, 
+                           ~ units::drop_units(.x) > 0)
     return(sum(climbing))
 }
 
